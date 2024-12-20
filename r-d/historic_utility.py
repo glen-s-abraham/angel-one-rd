@@ -2,6 +2,7 @@ import pandas as pd
 import datetime as dt
 from instrument_utility import InstrumentUtility
 from SmartApi import SmartConnect
+import time
 
 
 class HistoricUtility:
@@ -36,19 +37,13 @@ class HistoricUtility:
             exchange=exchange,
             interval=interval,
         )
-        response = self.__smart_api_client.getCandleData(params)
+        response = self.__smart_api_client.getCandleData(
+            params,
+        )
+
         if "data" not in response or not response["data"]:
             raise Exception("No data found in response")
-
-        # Convert response data to a DataFrame
-        df = pd.DataFrame(
-            response["data"], columns=["date", "open", "high", "low", "close", "volume"]
-        )
-        df.set_index("date", inplace=True)
-        df.index = pd.to_datetime(df.index)  # Ensure date column is datetime type
-        df.index = df.index.tz_localize(None)
-
-        return df
+        return response["data"]
 
     def fetch_candle_data(
         self,
@@ -64,17 +59,64 @@ class HistoricUtility:
         - If `days` is provided, calculate `fromdate` and `todate` automatically.
         - Otherwise, use the given `fromdate` and `todate`.
         """
+        df = pd.DataFrame(columns=["date", "open", "high", "low", "close", "volume"])
+
         if days is not None:
             # Calculate fromdate and todate based on days
             todate = dt.datetime.today().strftime("%Y-%m-%d %H:%M")
-            print(todate)
             fromdate = (dt.datetime.today() - dt.timedelta(days=int(days))).strftime(
                 "%Y-%m-%d %H:%M"
             )
-            print(fromdate)
+            fromdate = dt.datetime.strptime(fromdate, "%Y-%m-%d %H:%M")
+            fromdate = dt.datetime(fromdate.year, fromdate.month, fromdate.day, 9, 15)
+            fromdate = (dt.datetime.today() - dt.timedelta(days=int(days))).strftime(
+                "%Y-%m-%d %H:%M"
+            )
+
         elif fromdate is None or todate is None:
             raise ValueError(
                 "Either 'days' or both 'fromdate' and 'todate' must be provided"
             )
 
-        return self.__fetch_candle_data(symbol, fromdate, todate, exchange, interval)
+        while True:
+            # Wait out to override throttling
+            time.sleep(0.5)
+
+            print(f"Fetching data from {fromdate}-{todate}")
+
+            # Fetch data for the current range
+            data = None
+            try:
+                data = self.__fetch_candle_data(
+                    symbol, fromdate, todate, exchange, interval
+                )
+            except:
+                print("no data")
+                data = None
+
+            if not data:
+                break
+
+            # Create a temporary DataFrame
+            temp_df = pd.DataFrame(
+                data, columns=["date", "open", "high", "low", "close", "volume"]
+            )
+            temp_df["date"] = pd.to_datetime(
+                temp_df["date"].str[:16], format="%Y-%m-%dT%H:%M"
+            )
+
+            # Append the temporary DataFrame to the main DataFrame
+            df = pd.concat([temp_df, df], ignore_index=True)
+
+            # Update the `todate` for the next iteration to fetch older data
+            todate = temp_df["date"].iloc[0] - dt.timedelta(seconds=1)
+            todate = todate.strftime("%Y-%m-%d %H:%M")
+
+            # Break if all data is fetched
+            if temp_df["date"].iloc[0] <= pd.to_datetime(fromdate):
+                break
+
+        df.set_index("date", inplace=True)
+        df.index = pd.to_datetime(df.index)  # Ensure date column is datetime type
+        df.index = df.index.tz_localize(None)  # Remove timezone information
+        return df

@@ -24,20 +24,22 @@ correlation_id = "abcde"
 data = smartApi.generateSession(username, pwd, totp)
 
 
-print(data)
-
 if data["status"] == False:
     logger.error(data)
 
 
 historic_utils = HistoricUtility(smart_api_client=smartApi)
 
-print(
-    historic_utils.fetch_candle_data(
-        "INFY",
-        fromdate="2024-12-19 09:15",
-        todate="2024-12-19 15:15",
-    )
-)
 
-print(historic_utils.fetch_candle_data("INFY", days=30))
+df = historic_utils.fetch_candle_data("INFY", days=2000)
+
+# Check if the DataFrame is not empty
+if not df.empty:
+    print(f"Number of records fetched: {len(df)}")
+    
+    # Print the first and last index in a robust way
+    print(f"First index: {df.index[0]}")
+    print(f"Last index: {df.index[-1]}")
+else:
+    print("No data fetched. Please check the symbol or the date range.")
+
