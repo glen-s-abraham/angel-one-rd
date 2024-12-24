@@ -3,6 +3,7 @@ import pyotp
 from logzero import logger
 from dotenv import load_dotenv
 from SmartApi import SmartConnect
+from SmartApi.smartWebSocketV2 import SmartWebSocketV2
 from historic_utility import HistoricUtility
 
 # Load environment variables
@@ -20,6 +21,7 @@ class ConnectionUtility:
         self.__password = os.getenv("ANGEL_ONE_PIN")
         self.__totp_secret = os.getenv("ANGEL_ONE_TOTP_QR")
         self.__client = None
+        self.__ws_client = None
 
         self._validate_env_variables()
 
@@ -71,6 +73,27 @@ class ConnectionUtility:
             logger.error("Error starting session with SmartApi.")
             raise e
 
+    def _start_ws_session(self):
+        """
+        Initiates a WebSocket session with SmartApi.
+        """
+        if self.__ws_client:
+            logger.info("WebSocket session already started.")
+            return
+
+        smart_connect = self.get_client_session()
+        try:
+            self.__ws_client = SmartWebSocketV2(
+                auth_token=smart_connect.access_token,
+                api_key=self.__api_key,
+                client_code=self.__username,
+                feed_token=smart_connect.feed_token,
+            )
+            logger.info("WebSocket session successfully started.")
+        except Exception as e:
+            logger.error("Error starting WebSocket session.")
+            raise e
+
     def get_client_session(self):
         """
         Retrieves the current SmartApi client session.
@@ -80,3 +103,13 @@ class ConnectionUtility:
             logger.info("No active session found. Starting a new session.")
             self._start_session()
         return self.__client
+
+    def get_ws_client_session(self):
+        """
+        Retrieves the current SmartApi WebSocket client session.
+        Starts a new session if none exists.
+        """
+        if not self.__ws_client:
+            logger.info("No active WebSocket session found. Starting a new WebSocket session.")
+            self._start_ws_session()
+        return self.__ws_client

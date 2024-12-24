@@ -1,0 +1,4 @@
+[E 241223 18:08:30 smartWebSocketV2:87] Invalid initialization parameters. Provide valid values for all the tokens.
+[E 241223 18:10:07 smartWebSocketV2:87] Invalid initialization parameters. Provide valid values for all the tokens.
+[E 241223 18:11:06 smartWebSocketV2:87] Invalid initialization parameters. Provide valid values for all the tokens.
+[E 241223 18:15:53 smartWebSocketV2:212] Error occurred during subscribe: string indices must be integers

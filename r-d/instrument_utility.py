@@ -1,5 +1,40 @@
 import urllib.request
 import json
+from enum import Enum
+from typing import Literal, List
+
+
+class MarketType(Enum):
+    NSE_CM = 1  # NSE Cash Market
+    NSE_FO = 2  # NSE Futures & Options
+    BSE_CM = 3  # BSE Cash Market
+    BSE_FO = 4  # BSE Futures & Options
+    MCX_FO = 5  # MCX Futures & Options
+    NCX_FO = 7  # NCX Futures & Options
+    CDE_FO = 13  # CDE Futures & Options
+
+    @classmethod
+    def from_name(cls, name):
+        """Get the integer value corresponding to the given name."""
+        try:
+            return cls[name.upper()].value
+        except KeyError:
+            raise ValueError(f"Invalid market type: {name}")
+
+
+class MarketMode(Enum):
+    LTP = 1  # Last Traded Price
+    QUOTE = 2  # Quote
+    SNAP_QUOTE = 3  # Snap Quote
+    DEPTH_20 = 4  # 20-Depth
+
+    @classmethod
+    def from_name(cls, name):
+        """Get the integer value corresponding to the given name."""
+        try:
+            return cls[name.upper().replace("-", "_")].value
+        except KeyError:
+            raise ValueError(f"Invalid data type: {name}")
 
 
 class InstrumentUtility:
@@ -66,16 +101,19 @@ class InstrumentUtility:
             print(f"No match found for token: {token}")
             return None
 
+    def build_stream_token_param(
+        self, exchange_type: MarketType, stock_symbols: List[str] = []
+    ):
+        if not isinstance(exchange_type, MarketType):
+            raise ValueError(
+                f"Invalid exchange_type: {exchange_type}. Must be a valid MarketType."
+            )
 
-# Example usage
-if __name__ == "__main__":
-    utility = InstrumentUtility()
+        token_param = {
+            "exchangeType": exchange_type.value,
+            "tokens": [],
+        }
+        for symbol in stock_symbols:
+            token_param["tokens"].append(self.token_lookup(symbol=symbol))
 
-    # Example usage
-    token = utility.token_lookup("INFY")
-    if token:
-        print(f"Token for INFY: {token}")
-
-    symbol = utility.symbol_lookup("1594")
-    if symbol:
-        print(f"Symbol for token 1594: {symbol}")
+        return token_param
