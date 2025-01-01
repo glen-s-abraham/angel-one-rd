@@ -25,7 +25,7 @@ correlation_id = "abc123"
 
 watchlist = [
     instrument_utility.build_stream_token_param(
-        exchange_type=MarketType.NSE_CM, stock_symbols=["INFY", "RELIANCE"]
+        exchange_type=MarketType.NSE_CM, stock_symbols=["TATAPOWER", "COALINDIA"]
     )
 ]
 
@@ -39,7 +39,7 @@ def on_data(wsapp, message):
 
 def on_open(wsapp):
     logger.info("on open")
-    smart_web_socket.subscribe(correlation_id, MarketMode.DEPTH_20.value, watchlist)
+    smart_web_socket.subscribe(correlation_id, MarketMode.SNAP_QUOTE.value, watchlist)
     # sws.unsubscribe(correlation_id, mode, token_list1)
 
 
