@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 from enum import Enum
+from SmartApi import SmartConnect
+import pandas as pd
 
 
 # Enum Definitions
@@ -74,6 +76,7 @@ class OrderCreateParams:
 
     def __init__(
         self,
+        orderid: Optional[str] = None,
         variety: Optional[ORDER_VARIETY] = ORDER_VARIETY.NONE,
         tradingsymbol: Optional[str] = None,
         symboltoken: Optional[str] = None,
@@ -91,6 +94,7 @@ class OrderCreateParams:
         squareoff: Optional[float] = None,
         stoploss: Optional[float] = None,
     ):
+        self.orderid = orderid
         self.variety = variety
         self.tradingsymbol = tradingsymbol
         self.symboltoken = symboltoken
@@ -121,6 +125,35 @@ class OrderCreateParams:
         }
 
 
+class OrderUtility:
+
+    def __init__(self, smartapi: SmartConnect):
+        self.__smartapi = smartapi
+
+    def place_order(self, order_details: OrderCreateParams):
+        res = self.__smartapi.placeOrderFullResponse(
+            orderparams=order_details.to_dict()
+        )
+        return res
+
+    def create_gtt(self, order_details: OrderCreateParams):
+        res = self.__smartapi.gttCreateRule(order_details)
+        return res
+
+    def cancel_order(self, variety: ORDER_VARIETY, order_id: str):
+        res = self.__smartapi.cancelOrder(order_id=order_id, variety=variety.value)
+        return res
+
+    def modify_order(self, order_details: OrderCreateParams):
+        res = self.__smartapi.modifyOrder(orderparams=order_details.to_dict())
+        return res
+
+    def list_order_book(self, order_status_filter: str = "open"):
+        res = self.__smartapi.orderBook()
+        df = pd.DataFrame(res["data"] if res["data"] else [])
+        return df[df["orderstatus"] == order_status_filter]
+
+
 # Example Usage
 normal_order_params = OrderCreateParams(
     variety=ORDER_VARIETY.NORMAL,
@@ -134,7 +167,7 @@ normal_order_params = OrderCreateParams(
     price=19500,
     squareoff=0,
     stoploss=0,
-    quantity=1
+    quantity=1,
 )
 print(normal_order_params.to_dict())
 
