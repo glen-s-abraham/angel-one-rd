@@ -33,6 +33,7 @@ class PRODUCT_TYPE(Enum):
     MIS = "MIS"  # Margin Intraday Squareoff
     MARGIN = "MARGIN"
     INTRADAY = "INTRADAY"
+    BO = "BO"
     NONE = None
 
 
@@ -93,6 +94,7 @@ class OrderCreateParams:
         timeperiod: Optional[int] = None,
         squareoff: Optional[float] = None,
         stoploss: Optional[float] = None,
+        trailingStopLoss: Optional[float] = None,
     ):
         self.orderid = orderid
         self.variety = variety
@@ -111,6 +113,7 @@ class OrderCreateParams:
         self.timeperiod = timeperiod
         self.squareoff = squareoff
         self.stoploss = stoploss
+        self.trailingStopLoss = trailingStopLoss
 
     def to_dict(self) -> dict:
         """
@@ -152,6 +155,12 @@ class OrderUtility:
         res = self.__smartapi.orderBook()
         df = pd.DataFrame(res["data"] if res["data"] else [])
         return df[df["orderstatus"] == order_status_filter]
+
+    def get_ltp(self, symbol, token, exchange=ORDER_EXCHANGE.NSE):
+        res = self.__smartapi.ltpData(
+            exchange=exchange.value, tradingsymbol=symbol, symboltoken=token
+        )
+        return res["data"] if res["data"] else {}
 
 
 # Example Usage

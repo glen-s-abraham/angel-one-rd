@@ -94,5 +94,42 @@ normal_order_params = OrderCreateParams(
 # res = order_utility.cancel_order(
 #     order_id="250101000696373", variety=ORDER_VARIETY.NORMAL
 # )
-res = order_utility.list_order_book()
+
+
+stoploss_order_params = OrderCreateParams(
+    variety=ORDER_VARIETY.STOPLOSS,
+    tradingsymbol="SBIN-EQ",
+    symboltoken="3045",
+    transactiontype=TRANSACTION_TYPE.BUY,
+    exchange=ORDER_EXCHANGE.NSE,
+    ordertype=ORDER_TYPE.STOPLOSS_LIMIT,
+    producttype=PRODUCT_TYPE.INTRADAY,
+    duration=ORDER_DURATION.DAY,
+    price=19700,
+    triggerprice=19700,
+    squareoff=0,
+    stoploss=0,
+    quantity=1,
+) 
+
+robo_order_params=OrderCreateParams(
+    variety=ORDER_VARIETY.ROBO,
+    tradingsymbol="SBIN-EQ",
+    symboltoken="3045",
+    ordertype=ORDER_TYPE.STOPLOSS_MARKET,
+    transactiontype=TRANSACTION_TYPE.BUY,
+    exchange=ORDER_EXCHANGE.NSE,
+    producttype=PRODUCT_TYPE.BO,
+    duration=ORDER_DURATION.DAY,
+    price=19700,
+    stoploss=10,
+    squareoff=30,
+    quantity=1
+    
+) 
+
+
+res = order_utility.place_order(order_details=robo_order_params)
+# res = order_utility.get_ltp(symbol="SBIN-EQ",token="3045")
+
 print(res)
